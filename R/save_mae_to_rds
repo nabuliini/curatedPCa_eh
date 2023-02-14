@@ -21,7 +21,7 @@ metadata_raw <- data.frame(Title="",	Description="",	BiocVersion="",	Genome="",	
 
 
 for(i in 1:length(maes)){  #length(maes)
-  mae <- maes[i]  # Get spesific mae & separate the study name for future naming
+  mae <- maes[i]  # Get specific mae & separate the study name for future naming
   study <- gsub("mae_","",mae)
   ex <- names(experiments(get(mae))) # Get the names of object ("experiments") in mae
   
@@ -39,7 +39,7 @@ for(i in 1:length(maes)){  #length(maes)
     
     # Add with <<- to modify global variable from lapply
     metadata_raw <<- bind_rows(metadata_raw,c(Title=oname,Description=descrp,BiocVersion=biocv,Species=species,
-                                             RDataClass=class(get(oname)),DispatchClass="Rds",ResourceName=fname,
+                                             RDataClass=class(get(oname))[1],DispatchClass="Rds",ResourceName=fname,
                                              RDataPath=paste0("curatedPCaData/",fname),Tags=x))
     
   })
@@ -55,7 +55,7 @@ for(i in 1:length(maes)){  #length(maes)
   descrp <- paste(oname,"clinical data of",study,"cohort in curatedPCaData package",sep=" ")
   
   metadata_raw <- bind_rows(metadata_raw,c(Title=oname,Description=descrp,BiocVersion=biocv,Species=species,
-                                           RDataClass=class(get(oname)),DispatchClass="Rds",ResourceName=fname,
+                                           RDataClass=class(get(oname))[1],DispatchClass="Rds",ResourceName=fname,
                                            RDataPath=paste0("curatedPCaData/",fname),Tags="clinical"))
   
   # Save sampleMap
@@ -69,9 +69,12 @@ for(i in 1:length(maes)){  #length(maes)
   descrp <- paste(oname,"sampleMap of",study,"cohort in curatedPCaData package",sep=" ")
          
   metadata_raw <- bind_rows(metadata_raw,c(Title=oname,Description=descrp,BiocVersion=biocv,Species=species,
-                                                  RDataClass=class(get(oname)),DispatchClass="Rds",ResourceName=fname,
+                                                  RDataClass=class(get(oname))[1],DispatchClass="Rds",ResourceName=fname,
                                                   RDataPath=paste0("curatedPCaData/",fname),Tags="sampleMap"))
   
 }
+
+
+
 
 
