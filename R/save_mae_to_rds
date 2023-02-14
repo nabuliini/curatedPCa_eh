@@ -1,0 +1,77 @@
+## Saving data from MAE-objects to separate .Rds files
+
+
+library(curatedPCaData)
+library(dplyr)  # For adding rows to metadata
+
+# Get available maes in curatedPCaData package and specify a path to the folder where to save
+maes <- grep("mae", utils::data(package="curatedPCaData")$result, value=TRUE)
+path <- "C:/Users/ansuha/Documents/curatedPCaData/data"
+vtag <- "20230214"  #Give version tag to be added to data files, here date in yyyymmdd
+biocv <- "3.16" #BioConductor version
+species <- "Homo sapiens"
+
+descriptions <- c(cna.gistic="copy number alteration",cna.logr="copy number alteration", gex.relz="gene expression", gex.logq="gene expression",gex.rma="gene expression",
+                  gex.logr="gene expression",gex.rsem.log="gene expression", mut="mutation", cibersort="cibersort deconvolution", xcell="xcell deconvolution",
+                  epic="epic deconvolution", quantiseq="quantiseq deconvolution", mcp="mcp deconvolution",estimate="estimate devonvolution",scores="gene expression marker scores")
+ 
+metadata_raw <- data.frame(Title="",	Description="",	BiocVersion="",	Genome="",	SourceType="",	SourceUrl="",
+                           SourceVersion="",	Species="",	TaxonomyId="",	Coordinate_1_based="",	DataProvider="",
+                           Maintainer="",	RDataClass="",	DispatchClass="",	ResourceName="",	RDataPath="",	Tags="")
+
+
+for(i in 1:length(maes)){  #length(maes)
+  mae <- maes[i]  # Get spesific mae & separate the study name for future naming
+  study <- gsub("mae_","",mae)
+  ex <- names(experiments(get(mae))) # Get the names of object ("experiments") in mae
+  
+  # Go through all "experiments" and save the object into its own .RDs file
+  lapply(ex,FUN=function(x){
+    #browser()
+    oname <- paste0(study,"_",x,"_",vtag)  # object name
+    fname <- paste0(oname,".Rds")  # file name
+    
+    assign(oname,get(mae)[[x]]) # Assign the object to the specific name
+    save(list=c(oname), file=paste0(path,"/",fname))
+    
+    # Add info to metadata
+    descrp <- paste(oname,descriptions[x],"data of",study,"cohort in curatedPCaData package",sep=" ")
+    
+    # Add with <<- to modify global variable from lapply
+    metadata_raw <<- bind_rows(metadata_raw,c(Title=oname,Description=descrp,BiocVersion=biocv,Species=species,
+                                             RDataClass=class(get(oname)),DispatchClass="Rds",ResourceName=fname,
+                                             RDataPath=paste0("curatedPCaData/",fname),Tags=x))
+    
+  })
+  
+  # Save clinical info
+  oname <- paste0(study,"_clinical_",vtag)  # object name
+  fname <- paste0(oname,".Rds")  # file name
+  
+  assign(oname,colData(get(mae))) # Assign the object to the spesific name
+  save(list=c(oname), file=paste0(path,"/",fname))
+  
+  # Add info to metadata
+  descrp <- paste(oname,"clinical data of",study,"cohort in curatedPCaData package",sep=" ")
+  
+  metadata_raw <- bind_rows(metadata_raw,c(Title=oname,Description=descrp,BiocVersion=biocv,Species=species,
+                                           RDataClass=class(get(oname)),DispatchClass="Rds",ResourceName=fname,
+                                           RDataPath=paste0("curatedPCaData/",fname),Tags="clinical"))
+  
+  # Save sampleMap
+  oname <- paste0(study,"_sampleMap_",vtag)  # object name
+  fname <- paste0(oname,".Rds")  # file name
+  
+  assign(oname,sampleMap(get(mae))) # Assign the object to the spesific name
+  save(list=c(oname), file=paste0(path,"/",fname))
+         
+  # Add info to metadata
+  descrp <- paste(oname,"sampleMap of",study,"cohort in curatedPCaData package",sep=" ")
+         
+  metadata_raw <- bind_rows(metadata_raw,c(Title=oname,Description=descrp,BiocVersion=biocv,Species=species,
+                                                  RDataClass=class(get(oname)),DispatchClass="Rds",ResourceName=fname,
+                                                  RDataPath=paste0("curatedPCaData/",fname),Tags="sampleMap"))
+  
+}
+
+
